@@ -1562,3 +1562,17 @@ func runEvaluationTests(evaluationTests []EvaluationTest, test *testing.T) {
 		}
 	}
 }
+
+func BenchmarkInArrayInteger(b *testing.B) {
+	expr, err := NewEvaluableExpression("1 in x")
+	if err != nil {
+		b.Fatal(err)
+	}
+	input := map[string]interface{}{
+		"x": []int{4, 3, 2, 1},
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = expr.Evaluate(input)
+	}
+}
