@@ -710,7 +710,7 @@ func TestNoParameterEvaluation(test *testing.T) {
 			Expected: true,
 		},
 		EvaluationTest{
-			
+
 			Name:  "Ternary/Java EL ambiguity",
 			Input: "false ? foo:length()",
 			Functions: map[string]ExpressionFunction{
@@ -1419,6 +1419,54 @@ func TestParameterizedEvaluation(test *testing.T) {
 			Parameters: []EvaluationParameter{fooParameter},
 			Expected:   false,
 		},
+		EvaluationTest{
+			Name:       "Element in string slice",
+			Input:      "'foo' in foo.StringSlice",
+			Parameters: []EvaluationParameter{fooParameter},
+			Expected:   true,
+		},
+		EvaluationTest{
+			Name:       "Element not in string slice",
+			Input:      "'foobar' in foo.StringSlice",
+			Parameters: []EvaluationParameter{fooParameter},
+			Expected:   false,
+		},
+		EvaluationTest{
+			Name:       "Element in int slice",
+			Input:      "2 in foo.IntSlice",
+			Parameters: []EvaluationParameter{fooParameter},
+			Expected:   true,
+		},
+		EvaluationTest{
+			Name:       "Element not in int slice",
+			Input:      "-2 in foo.IntSlice",
+			Parameters: []EvaluationParameter{fooParameter},
+			Expected:   false,
+		},
+		EvaluationTest{
+			Name:       "Element in float slice",
+			Input:      "1.5 in foo.FloatSlice",
+			Parameters: []EvaluationParameter{fooParameter},
+			Expected:   true,
+		},
+		EvaluationTest{
+			Name:       "Element not in float slice",
+			Input:      "-2.0 in foo.FloatSlice",
+			Parameters: []EvaluationParameter{fooParameter},
+			Expected:   false,
+		},
+		EvaluationTest{
+			Name:       "Element in bool slice",
+			Input:      "true in foo.BoolSlice",
+			Parameters: []EvaluationParameter{fooParameter},
+			Expected:   true,
+		},
+		EvaluationTest{
+			Name:       "Element not in bool slice",
+			Input:      "false in foo.BoolSlice",
+			Parameters: []EvaluationParameter{fooParameter},
+			Expected:   false,
+		},
 	}
 
 	runEvaluationTests(evaluationTests, test)
@@ -1512,5 +1560,33 @@ func runEvaluationTests(evaluationTests []EvaluationTest, test *testing.T) {
 			test.Logf("Evaluation result '%v' does not match expected: '%v'", result, evaluationTest.Expected)
 			test.Fail()
 		}
+	}
+}
+
+func BenchmarkInArrayInteger(b *testing.B) {
+	expr, err := NewEvaluableExpression("1 in x")
+	if err != nil {
+		b.Fatal(err)
+	}
+	input := map[string]interface{}{
+		"x": []int{4, 3, 2, 1},
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = expr.Evaluate(input)
+	}
+}
+
+func BenchmarkInArrayIntegerAndFloat(b *testing.B) {
+	expr, err := NewEvaluableExpression("5 in x")
+	if err != nil {
+		b.Fatal(err)
+	}
+	input := map[string]interface{}{
+		"x": []float32{4.0, 3.0, 2.0, 1.0},
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = expr.Evaluate(input)
 	}
 }
