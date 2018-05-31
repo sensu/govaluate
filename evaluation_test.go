@@ -1576,3 +1576,17 @@ func BenchmarkInArrayInteger(b *testing.B) {
 		_, _ = expr.Evaluate(input)
 	}
 }
+
+func BenchmarkInArrayIntegerAndFloat(b *testing.B) {
+	expr, err := NewEvaluableExpression("5 in x")
+	if err != nil {
+		b.Fatal(err)
+	}
+	input := map[string]interface{}{
+		"x": []float32{4.0, 3.0, 2.0, 1.0},
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = expr.Evaluate(input)
+	}
+}

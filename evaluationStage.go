@@ -17,21 +17,6 @@ const (
 	prefixErrorFormat     string = "Value '%v' cannot be used with the prefix '%v'"
 )
 
-var numberTypes = map[reflect.Kind]struct{}{
-	reflect.Int:     struct{}{},
-	reflect.Int8:    struct{}{},
-	reflect.Int16:   struct{}{},
-	reflect.Int32:   struct{}{},
-	reflect.Int64:   struct{}{},
-	reflect.Uint:    struct{}{},
-	reflect.Uint8:   struct{}{},
-	reflect.Uint16:  struct{}{},
-	reflect.Uint32:  struct{}{},
-	reflect.Uint64:  struct{}{},
-	reflect.Float32: struct{}{},
-	reflect.Float64: struct{}{},
-}
-
 type evaluationOperator func(left interface{}, right interface{}, parameters Parameters) (interface{}, error)
 type stageTypeCheck func(value interface{}) bool
 type stageCombinedTypeCheck func(left interface{}, right interface{}) bool
@@ -444,8 +429,8 @@ func inStage(left interface{}, right interface{}, parameters Parameters) (interf
 	return false, nil
 }
 
-func coerceFloat(v reflect.Value) float64 {
-	switch kind := v.Kind(); kind {
+func coerceFloat(v reflect.Value, kind reflect.Kind) float64 {
+	switch kind {
 	case reflect.Float32, reflect.Float64:
 		return v.Float()
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
@@ -457,6 +442,26 @@ func coerceFloat(v reflect.Value) float64 {
 	}
 }
 
+func isNumber(k reflect.Kind) bool {
+	switch k {
+	case reflect.Int:
+	case reflect.Int8:
+	case reflect.Int16:
+	case reflect.Int32:
+	case reflect.Int64:
+	case reflect.Uint:
+	case reflect.Uint8:
+	case reflect.Uint16:
+	case reflect.Uint32:
+	case reflect.Uint64:
+	case reflect.Float32:
+	case reflect.Float64:
+	default:
+		return false
+	}
+	return true
+}
+
 func valuesEqual(x, y interface{}) bool {
 	v1 := reflect.ValueOf(x)
 	v2 := reflect.ValueOf(y)
@@ -465,10 +470,8 @@ func valuesEqual(x, y interface{}) bool {
 	if v1Kind == v2Kind {
 		return reflect.DeepEqual(x, y)
 	}
-	if _, ok := numberTypes[v1Kind]; ok {
-		if _, ok := numberTypes[v2Kind]; ok {
-			return coerceFloat(v1) == coerceFloat(v2)
-		}
+	if isNumber(v1Kind) && isNumber(v2Kind) {
+		return coerceFloat(v1, v1Kind) == coerceFloat(v2, v2Kind)
 	}
 	return false
 }
